@@ -1,0 +1,97 @@
+
+
+#amount
+
+head(german_credit$amount)
+summary(german_credit$amount)
+plot(german_credit$amount)
+boxplot(german_credit$amount)#outlier 다수 존재
+plot(density(german_credit$amount))
+install.packages("fBasics")#skewness 확인
+library(fBasics)
+skewness(german_credit$amount)#skewness to the right
+skewness(log(german_credit$amount))#log 취해줘서 skewness가 줄어들음
+kurtosis(german_credit$amount)
+kurtosis(log(german_credit$amount))#log 취해줘서 kuttosis가 줄어들음
+
+#savings
+head(german_credit$savings)
+plot(german_credit$savings)#범주형,status of existing saving account or bonds
+mosaicplot(table(german_credit$savings,german_credit$response))
+pie(table(german_credit$savings),col=rainbow(4))
+
+table_savings <- with(german_credit,table(response,savings))
+CrossTable(t(table_savings)[c(1,2,3,4,5),],prop.t=F,prop.c=F,chisq=T)
+
+#employed
+head(german_credit$employed)
+plot(german_credit$employed)#범주형, present employment since
+mosaicplot(table(german_credit$employed,german_credit$response))
+pie(table(german_credit$employed),col=rainbow(4))
+
+table_employed <- with(german_credit,table(response,employed))
+CrossTable(t(table_employed)[c(1,2,3,4,5),],prop.t=F,prop.c=F,chisq=T)
+
+#installp
+head(german_credit$installp)
+plot(german_credit$installp)#범주형, installment rate in percentage of disposable income
+mosaicplot(table(german_credit$installp,german_credit$response))
+pie(table(german_credit$installp),col=rainbow(4))
+
+table_installp <- with(german_credit,table(response,installp))
+CrossTable(t(table_installp)[c(1,2,3,4),],prop.t=F,prop.c=F,chisq=T)
+
+#coapp
+head(german_credit$coapp)
+plot(german_credit$coapp)#범주형, other debtors/guarantors
+mosaicplot(table(german_credit$coapp,german_credit$response))
+pie(table(german_credit$coapp),col=rainbow(4))
+
+table_coapp <- with(german_credit,table(response,coapp))
+CrossTable(t(table_coapp)[c(1,2,3),],prop.t=F,prop.c=F,chisq=T)
+
+#resident
+head(german_credit$resident)
+plot(german_credit$resident)
+mosaicplot(table(german_credit$resident,german_credit$response))
+pie(table(german_credit$resident),col=rainbow(4))
+
+table_resident <- with(german_credit,table(response,resident))
+CrossTable(t(table_resident)[c(1,2,3,4),],prop.t=F,prop.c=F,chisq=T)
+
+#property
+head(german_credit$property)
+plot(german_credit$property)
+mosaicplot(table(german_credit$property,german_credit$response))
+pie(table(german_credit$property),col=rainbow(4))
+
+table_property <- with(german_credit,table(response,property))
+CrossTable(t(table_property)[c(1,2,3,4),],prop.t=F,prop.c=F,chisq=T)
+
+#other
+head(german_credit$other)
+plot(german_credit$other)
+mosaicplot(table(german_credit$other,german_credit$response))
+pie(table(german_credit$other),col=rainbow(4))
+
+table_other <- with(german_credit,table(response,other))
+CrossTable(t(table_other)[c(1,2,3),],prop.t=F,prop.c=F,chisq=T)
+
+#housing
+head(german_credit$housing)
+plot(german_credit$housing)
+mosaicplot(table(german_credit$housing,german_credit$response))
+pie(table(german_credit$housing),col=rainbow(4))
+
+table_housing <- with(german_credit,table(response,housing))
+CrossTable(t(table_housing)[c(1,2,3),],prop.t=F,prop.c=F,chisq=T)
+
+#existcr
+head(german_credit$existcr)
+plot(german_credit$existcr)
+mosaicplot(table(german_credit$existcr,german_credit$response))
+pie(table(german_credit$existcr),col=rainbow(4))
+
+table_existcr <- with(german_credit,table(response,existcr))
+CrossTable(t(table_existcr)[c(1,2,3,4),],prop.t=F,prop.c=F,chisq=T)
+
