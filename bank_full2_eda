@@ -1,0 +1,641 @@
+setwd("C:/Users/장세환/Desktop/데이터마이닝-박헌진교수님/중간고사 대체")
+.libPaths('E:/R')
+
+install.packages("fBasics")
+library(fBasics)
+
+install.packages('psych')
+library(psych)
+
+
+bank=read.csv("bank-full2.csv")
+str(bank)
+head(bank)
+
+bank$age <- as.numeric(bank$age)
+bank$duration <- as.numeric(bank$duration)
+bank$campaign <- as.factor(bank$campaign)
+bank$pdays <- as.factor(bank$pdays)
+bank$previous <- as.factor(bank$previous)
+bank$emp.var.rate <- as.factor(bank$emp.var.rate)
+bank$cons.price.idx <- as.factor(bank$cons.price.idx)
+bank$cons.conf.idx <- as.factor(bank$cons.conf.idx)
+bank$nr.employed <- as.factor(bank$nr.employed)
+
+str(bank)
+
+#age
+
+with(bank,hist(age))
+skewness(bank$age)
+with(bank,hist(log(age)))
+skewness(log(bank$age))#skewness 감소
+
+# plot
+
+with(bank,plot(density(age)))
+
+# age, y
+
+# hist
+with(bank,hist(age[which(y == "no")]))
+with(bank,hist(age[which(y == "yes")]))
+
+summary(bank$age)
+
+with(bank,hist(age[which(y == "yes")],xlim = c(0,100),ylim = c(0,0.05),
+                    freq = F,col = rgb(0,0,1,0.5),main = "yes과 no의 나이 분포 비교",xlab = "나이",ylab = "도수"))
+skewness(with(bank,age[which(y == "yes")]))
+
+with(bank,hist(age[which(y == "no")],add = T,freq = F,col = rgb(1,0,0,0.5)))
+
+skewness(with(bank,age[which(y == "no")]))
+
+# yes가 no보다 오른쪽으로 꼬리가 더 길다.->skewness통해 확인 가능
+
+#age,y의 기술통계량에는 큰 차이없다.
+describeBy(bank$age, group = bank$y)
+
+#density plot
+plot(with(bank,density(age[which(y == "yes")])),main = "나이의 분포")
+plot(with(bank,density(age[which(y == "no")])))
+
+# 각 분포의 중심 비교
+with(bank,abline(v = mean(age[which(y == "yes")]),col = "blue",lty = 2,lwd = 3))
+with(bank,abline(v = mean(age[which(y == "no")]),col = "red",lty = 2,lwd = 3))
+legend("topright",c("yes","no"),lty = 1, lwd = 3, col = c("blue","red")
+# no, yes의 중심이 큰 차이가 없다.
+       
+# Two-sample Kolmogorov-Smirnov test
+ks.test(bank[which(bank$y == "yes"),"age"],
+        bank[which(bank$y == "no"),"age"])
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+#job
+
+install.packages('gmodels')
+library(gmodels)
+barplot(table(bank$job),col = rainbow(12))
+pie(table(bank$job),col = rainbow(12))
+CrossTable(bank$job)
+
+#job,y
+
+tjob = with(bank, table(job, y))
+tjob
+
+mosaicplot(tjob,color = c("blue","red"))
+CrossTable(tjob,prop.t = F, prop.c = F, chisq = T)
+
+# 범주통합
+
+bank$job2 <- ifelse(bank$job == "admin." | bank$job == "unemployed", "(admin.,unemloyed)",
+                         ifelse(bank$job == "enterpreneur" | bank$job == "services", "(enterpreneur,services)",
+                                ifelse(bank$job == "housemaid" | bank$job == "self-employed","(housemaid,self-employed)",
+                                       ifelse(ban$job == "management" | bank$job == "technician" | bank$job == "unknown","(management,technician,unknown)",
+                                              ifelse(bank$job == "blue-collar", "(blue-collar)",
+                                                     ifelse(bank$job == "retired", "(retired)","(student)"))))))
+table(bank$job2)
+
+mosaicplot(table(bank$job2,bank$y),color = c("blue","red"))
+
+CrossTable(table(bank$job2,bank$y),prop.t = F, prop.c = T, chisq = T)
+
+bank$job2=as.factor(bank$job2)
+bank$job2
+
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+#marital
+
+
+library(gmodels)
+barplot(table(bank$marital),col = rainbow(4))
+pie(table(bank$marital),col = rainbow(4))
+CrossTable(bank$marital)
+
+#marital,y
+
+tmarital= with(, table(marital, y))
+tmarital
+
+mosaicplot(tmarital,color = c("red","blue"))
+
+CrossTable(tmarital,prop.t = F, prop.c = F, chisq = T)
+
+bank$marital2 = ifelse(bank$marital == "divorced" | bank$marital == "married","(divorced, married)","(single, unknown)")
+
+mosaicplot(table(bank$marital2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$marital2,bank$y),prop.t = F, prop.c = T, chisq 
+bank$marital2 = as.factor(bank$marital2)
+bank$marital2
+
+# (divorced,married)와 (single,unknown)의 p-value>0.05 이므로 두 그룹 간의 차이가 크다고 해석
+
+#education
+library(gmodels)
+barplot(table(bank$education),col = rainbow(8))
+pie(table(bank$education),col = rainbow(8))
+CrossTable(bank$education)
+
+#education,y
+
+teducation = with(bank, table(education, y))
+teducation
+
+mosaicplot(teducation,color = c("red","blue"))
+CrossTable(teducation,prop.t = F, prop.c = F, chisq = T)
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+#default
+
+library(gmodels)
+barplot(table(bank$default),col = rainbow(3))
+pie(table(bank$default),col = rainbow(3))
+CrossTable(bank$default)
+
+#default,y
+
+tdefault= with(bank, table(default, y))
+tdefault
+mosaicplot(tdefault,color = c("red","blue"))
+CrossTable(tdefault,prop.t = F, prop.c = F, chisq = T)
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#housing
+library(gmodels)
+barplot(table(bank$housing),col = rainbow(3))
+pie(table(bank$housing),col = rainbow(3))
+CrossTable(bank$housing)
+
+#housing,y
+
+thousing =with(bank, table(housing, y))
+thousing
+
+mosaicplot(thousing,color = c("red","blue"))
+
+CrossTable(thousing,prop.t = F, prop.c = F, chisq = T)
+
+$housing2 <- ifelse(T,"(no, unknown, yes)",)
+
+mosaicplot(table(bank$housing2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$housing2,bank$y),prop.t = F, prop.c = T, chisq = T)
+
+bank$housing2 <- as.factor(bank$housing2)
+bank$housing2
+
+# p-value가 0.05보다 크므로 housing은 유의한 변수가 아니다.
+
+
+# loan
+
+library(gmodels)
+barplot(table(bank$loan),col = rainbow(3))
+pie(table(bank$loan),col = rainbow(3))
+CrossTable(bank$loan)
+
+#loan,y
+
+tloan <- with(bank, table(loan, y))
+tloan
+
+mosaicplot(tloan,color = c("red","blue"))
+
+CrossTable(tloan,prop.t = F, prop.c = F, chisq = T)
+
+bank$loan2 <- ifelse(T,"(no, unknown, yes)",)
+
+mosaicplot(table(bank$loan2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$loan2,bank$y),prop.t = F, prop.c = T, chisq = T)
+
+bank$loan2 <- as.factor(bank$loan2)
+bank$loan2
+
+# p-value가 0.05보다 크므로 loan은 유의한 변수가 아니다.
+
+
+# contact
+
+library(gmodels)
+barplot(table(bank$contact),col = rainbow(2))
+pie(table(bank$contact),col = rainbow(2))
+CrossTable(bank$contact)
+
+#contact, y
+
+tcontact <- with(bank, table(contact, y))
+tcontact
+
+mosaicplot(tcontact,color = c("red","blue"))
+
+CrossTable(tcontact,prop.t = F, prop.c = F, chisq = T)
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+#month
+library(gmodels)
+barplot(table(bank$month),col = rainbow(12))
+pie(table(bank$month),col = rainbow(12))
+CrossTable(bank$month)
+
+# month,y
+
+tmonth <- with(bank, table(month, y))
+tmonth
+
+mosaicplot(tmonth,color = c("red","blue"))
+
+CrossTable(tmonth,prop.t = F, prop.c = F, chisq = T)
+
+CrossTable(tmonth[c(3,6,9,10),],prop.t = F, prop.c = F, chisq = T)
+
+CrossTable(tmonth[c(2,5,8),],prop.t = F,prop.c = F,chisq = T)
+
+
+bank$month2 <- ifelse(bank$month == "dec" | bank$month == "mar" | bank$month == "oct" | bank$month == "sep" ,"(dec,mar,oct,sep)",
+                           ifelse(bank$month == "aug" | bank$month == "jun" | bank$month == "nov" ,"(aug, jun, nov)",
+                                  ifelse(bank$month == "apr", "(apr)",
+                                         ifelse(bank$month == "jul", "(jul)","(may)"))))
+bank$month2
+
+mosaicplot(table(bank$month2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$month2,bank$y),prop.t = F, prop.c = T, chisq = T)
+
+bank$month2 <- as.factor(bank$month2)
+bank$month2
+
+# p-value가 0에 가까우므로 month는 유의한 변수이다.
+
+
+#day_of_week
+
+library(gmodels)
+barplot(table(bank$day_of_week),col = rainbow(5))
+pie(table(bank$day_of_week),col = rainbow(5))
+CrossTable(bank$day_of_week)
+
+#day_of_week,y
+
+tday_of_week <- with(bank, table(day_of_week, y))
+tday_of_week
+
+mosaicplot(tday_of_week,color = c("red","blue"))
+
+CrossTable(tday_of_week,prop.t = F, prop.c = F, chisq = T)
+
+
+bank$day_of_week2 <- ifelse(bank$day_of_week == "fri" | bank$day_of_week == "mon","(fri, mon)","(thu, tue, wed)")
+bank$day_of_week2
+
+mosaicplot(table(bank$day_of_week2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$day_of_week2,bank$y),prop.t = F, prop.c = T, chisq = T)
+
+bank$day_of_week2 <- as.factor(bank$day_of_week2)
+bank$day_of_week2
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#duration
+
+# histogram
+with(bank,hist(duration))
+with(bank,hist(log(duration)))
+
+# density plot
+with(bank,plot(density(duration)))
+with(bank,plot(density(log(duration))))
+
+# lduration 변수 생성
+bank$lduration <- log(bank$duration+1)
+
+#duration ,y
+
+# boxplot
+with(bank,plot(duration~y))
+# 왼쪽으로 쏠림
+
+with(bank,plot(lduration~y))
+# 정규분포에 좀 더 가까워진다.
+
+# histogram
+with(bank,hist(lduration[which(y == "no")]))
+with(bank,hist(lduration[which(y == "no")],breaks = 20))
+with(bank,hist(lduration[which(y == "no")],breaks = 50))
+with(bank,hist(lduration[which(y == "yes")]))
+with(bank,hist(lduration[which(y == "yes")],breaks = 20))
+with(bank,hist(lduration[which(y == "yes")],breaks = 50))
+
+summary(bank$lduration)
+
+with(bank,hist(lduration[which(y == "yes")],xlim = c(0,10),ylim = c(0,0.5),
+                    freq = F,col = rgb(0,0,1,0.5),main = "yes과 no의 나이 분포 비교",xlab = "나이",ylab = "도수"))
+
+with(bank,hist(lduration[which(y == "no")],add = T,freq = F,col = rgb(1,0,0,0.5)))
+
+
+describeBy(bank$lduration, group = bank$y)
+
+d2 <- with(bank,density(lduration[which(y == "yes")]))
+plot(d2)
+
+d3 <- with(bank,density(lduration[which(y == "yes")],bw = 4))
+plot(d3)
+d4 <- with(bank,density(lduration[which(y == "no")]))
+plot(d4)
+d3
+d4
+
+plot(d2,xlim = c(0,10), ylim = c(0,0.5),col = "blue",lwd = 3,
+     main = "나이의 분포", xlab = "나이",ylab = "밀도")
+# 중심위치에 대해 넣기
+with(bank,abline(v = mean(lduration[which(y == "yes")]),col = "blue",lty = 2,lwd = 3))
+lines(d4, col = "red",lwd = 3)
+with(bank,abline(v = mean(lduration[which(y == "no")]),col = "red",lty = 2,lwd = 3))
+legend("topright",c("yes","no"),lty = 1, lwd = 3, col = c("blue","red"))
+# no일 때의 중심의 위치가 왼쪽에 있다.
+
+# 검정
+
+ks.test(bank[which(bank$y == "yes"),"lduration"],
+        bank[which(bank$y == "no"),"lduration"])
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#campaign
+
+library(gmodels)
+barplot(table(bank$campaign),col = rainbow(42))
+pie(table(bank$campaign),col = rainbow(42))
+CrossTable(bank$campaign)
+
+#campaign ,y
+
+tcampaign <- with(bank, table(campaign, y))
+tcampaign
+
+mosaicplot(tcampaign,color = c("red","blue"))
+
+CrossTable(tcampaign,prop.t = F, prop.c = F, chisq = T)
+
+CrossTable(tcampaign[c(2,3),],prop.t = F,prop.c = F, chisq = T)
+
+
+bank$campaign2 <- ifelse(as.numeric(bank$campaign)>5,"(5~56)",
+                              ifelse(as.numeric(bank$campaign) == 4,"(4)",
+                                     ifelse(as.numeric(bank$campaign) == 1, "(1)","(2,3)")))
+bank$campaign2 <- as.factor(bank$campaign2)
+bank$campaign2
+
+mosaicplot(table(bank$campaign2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$campaign2,bank$y),prop.t = F, prop.c = F, chisq = T)
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#pdays
+
+library(gmodels)
+barplot(table(bank$pdays),col = rainbow(27))
+pie(table(bank$pdays),col = rainbow(27))
+CrossTable(bank$pdays)
+
+#pdays, y
+
+tpdays <- with(bank, table(pdays, y))
+tpdays
+
+mosaicplot(tpdays,color = c("red","blue"))
+
+CrossTable(tpdays,prop.t = F, prop.c = F, chisq = T)
+
+CrossTable(tpdays[c(-27),],prop.t = F,prop.c = F, chisq = T)
+
+
+bank$pdays2 <- ifelse(bank$pdays == "999","(999)","(1~27)")
+bank$pdays2
+
+mosaicplot(table(bank$pdays2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$pdays2,bank$y),prop.t = F, prop.c = F, chisq = T)
+
+bank$pdays2 <- as.factor(bank$pdays2)
+bank$pdays2
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#previous
+
+library(gmodels)
+barplot(table(bank$previous),col = rainbow(27))
+pie(table(bank$previous),col = rainbow(27))
+CrossTable(bank$previous)
+
+#previous,y
+
+tprevious <- with(bank, table(previous, y))
+tprevious
+
+mosaicplot(tprevious,color = c("red","blue"))
+
+CrossTable(tprevious,prop.t = F, prop.c = F, chisq = T)
+
+
+bank$previous2 <- ifelse(bank$previous == "0","(0)",
+                              ifelse(bank$previous == "1","(1)","(2~7)"))
+bank$previous2
+
+mosaicplot(table(bank$previous2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$previous2,bank$y),prop.t = F, prop.c = F, chisq = T)
+
+bank$previous2 <- as.factor(bank$previous2)
+bank$previous2
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#poutcome
+library(gmodels)
+barplot(table(bank$poutcome),col = rainbow(3))
+pie(table(bank$poutcome),col = rainbow(3))
+CrossTable(bank$poutcome)
+
+#poutcome, y
+
+tpoutcome <- with(bank, table(poutcome, y))
+tpoutcome
+
+mosaicplot(tpoutcome,color = c("red","blue"))
+
+CrossTable(tpoutcome,prop.t = F, prop.c = F, chisq = T)
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+#emp.var.date
+
+library(gmodels)
+barplot(table(bank$emp.var.date),col = rainbow(10))
+pie(table(bank$emp.var.date),col = rainbow(10))
+CrossTable(bank$emp.var.date)
+
+#emp.var.date, y
+
+temp.var.rate  <- with(bank, table(emp.var.rate , y))
+temp.var.rate 
+
+mosaicplot(temp.var.rate ,color = c("red","blue"))
+
+CrossTable(temp.var.rate ,prop.t = F, prop.c = F, chisq = T)
+
+bank$emp.var.date2 <- ifelse(bank$emp.var.rate == "-3.4" | bank$emp.var.rate == "-3" | bank$emp.var.rate == "-2.9" ,"(-3.4~-2.9)",
+                                  ifelse(bank$emp.var.rate == "-1.7" | bank$emp.var.rate == "-1.1" | bank$emp.var.rate == "-0.2" ,"(-1.7~-0.2)",
+                                         ifelse(bank$emp.var.rate == "-0.1", "(-0.1)",
+                                                ifelse(bank$emp.var.rate == "1.1","(1.1)","(1.4)"))))
+bank$emp.var.date2
+
+mosaicplot(table(bank$emp.var.date2,bank$y),color = c("red","blue"))
+
+CrossTable(table(bank$emp.var.date2,bank$y),prop.t = F, prop.c = F, chisq = T)
+
+bank$emp.var.date2 <- as.factor(bank$emp.var.date2)
+bank$emp.var.date2
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#cons.price.idx
+
+library(gmodels)
+barplot(table(bank$cons.price.idx),col = rainbow(26))
+pie(table(bank$cons.price.idx),col = rainbow(26))
+CrossTable(bank$cons.price.idx)
+
+#cons.price.idx, y
+
+tcons.price.idx <- with(bank, table(cons.price.idx, y))
+tcons.price.idx
+
+mosaicplot(tcons.price.idx,color = c("red","blue"))
+
+CrossTable(tcons.price.idx,prop.t = F, prop.c = F, chisq = T)
+
+bank$cons.price.idx2 <- as.factor(bank$cons.price.idx2)
+bank$cons.price.idx2
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+# cons.conf.idx
+
+library(gmodels)
+barplot(table(bank$cons.conf.idx),col = rainbow(26))
+pie(table(bank$cons.conf.idx),col = rainbow(26))
+CrossTable(bank$cons.conf.idx)
+
+#cons.conf.idx, y
+
+tcons.conf.idx <- with(bank, table(cons.conf.idx, y))
+tcons.conf.idx
+
+mosaicplot(tcons.conf.idx,color = c("red","blue"))
+
+CrossTable(tcons.conf.idx,prop.t = F, prop.c = F, chisq = T)
+
+## p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#euribor3m
+
+# histogram
+with(bank,hist(euribor3m))
+
+# density plot
+with(bank,plot(density(euribor3m)))
+
+# 이봉형 분포임을 알 수 있다.
+
+#euribor3m ,y
+
+with(bank,plot(euribor3m~y))
+# 왼쪽으로 쏠림
+
+# histogram
+with(bank,hist(euribor3m[which(y == "no")]))
+with(bank,hist(euribor3m[which(y == "no")],breaks = 20))
+with(bank,hist(euribor3m[which(y == "no")],breaks = 50))
+with(bank,hist(euribor3m[which(y == "yes")]))
+with(bank,hist(euribor3m[which(y == "yes")],breaks = 20))
+with(bank,hist(euribor3m[which(y == "yes")],breaks = 50))
+
+summary(bank$euribor3m)
+
+with(bank,hist(euribor3m[which(y == "yes")],xlim = c(0,5),ylim = c(0,1),
+                    freq = F,col = rgb(0,0,1,0.5),main = "yes과 no의 나이 분포 비교",xlab = "나이",ylab = "도수"))
+
+with(bank,hist(euribor3m[which(y == "no")],add = T,freq = F,col = rgb(1,0,0,0.5)))
+# yes가 no와 둘 다 이봉형이다.
+
+# 기술 통계량
+
+describeBy(bank$euribor3m, group = bank$y)
+# 두 그룹간 기술통계량이 현저히 다르다.
+
+# density plot (전체적인 trend 보기 위해)
+d2 <- with(bank,density(euribor3m[which(y == "yes")]))
+plot(d2)
+# 더 평평하게
+d3 <- with(bank,density(euribor3m[which(y == "yes")],bw = 4))
+plot(d3)
+d4 <- with(bank,density(euribor3m[which(y == "no")]))
+plot(d4)
+d3
+d4
+
+plot(d2,xlim = c(0,10), ylim = c(0,1),col = "blue",lwd = 3,
+     main = "나이의 분포", xlab = "나이",ylab = "밀도")
+# 중심위치에 대해 넣기
+with(bank,abline(v = mean(euribor3m[which(y == "yes")]),col = "blue",lty = 2,lwd = 3))
+lines(d4, col = "red",lwd = 3)
+with(bank,abline(v = mean(euribor3m[which(y == "no")]),col = "red",lty = 2,lwd = 3))
+legend("topright",c("yes","no"),lty = 1, lwd = 3, col = c("blue","red"))
+# no일 때의 중심의 위치가 오른쪽에 있다.
+# yes는 왼쪽 봉우리가 높고 no는 오른쪽 봉우리가 높다.
+
+# 검정
+
+ks.test(bank[which(bank$y == "yes"),"euribor3m"],
+        bank[which(bank$y == "no"),"euribor3m"])
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
+
+
+#nr.employed
+
+
+library(gmodels)
+barplot(table(bank$nr.employed),col = rainbow(11))
+pie(table(bank$nr.employed),col = rainbow(11))
+CrossTable($nr.employed)
+
+#nr.employed ,y
+
+tnr.employed  <- with(, table(nr.employed , y))
+tnr.employed
+
+mosaicplot(tnr.employed ,color = c("red","blue"))
+
+CrossTable(tnr.employed ,prop.t = F, prop.c = F, chisq = T)
+
+# p-value< 0.05이므로 신뢰도 95%하에서 유의한 변수
