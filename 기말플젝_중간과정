@@ -1,0 +1,450 @@
+
+getwd()
+setwd("E:/R")
+.libPaths()
+.libPaths("E:/R")
+
+library(MASS)
+
+library(fBasics)
+
+library(moments)
+
+bank=read.csv("bank-full2.csv")
+str(bank)
+head(bank)
+
+###############################
+
+## 적용방안 : 잠재고객의 정기예금 가입을 잘 예측하여 마케팅 타겟 집중화
+
+# TO DO LIST
+# 1.변수별 인코딩( 범주형 인코딩->one hot, 연속형-> 구간 나눔)
+# https://datascience.stackexchange.com/questions/37234/muti-hot-encoding-vs-label-encoding
+
+library(dplyr)
+str(bank)
+
+
+
+
+##### bank$y 원핫인코딩 yes=1, no=0
+#install.packages("caret")
+library(caret)
+dmy <- dummyVars(~y, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+newbank[2]
+
+bank$y=newbank[2]
+
+
+head(bank)
+
+
+
+###############job
+
+dmy <- dummyVars(~job, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$job=newbank
+head(bank)
+##############marital
+dmy <- dummyVars(~marital, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$marital=newbank
+head(bank)
+
+head(bank[])
+
+##############education
+dmy <- dummyVars(~education, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$education=newbank
+head(bank)
+#############default
+dmy <- dummyVars(~default, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$default=newbank[-1]
+head(bank)
+#############housing
+dmy <- dummyVars(~housing, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$housing=newbank[-1]
+head(bank)
+#############loan
+dmy <- dummyVars(~loan, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$loan=newbank[-1]
+head(bank)
+#############contact
+dmy <- dummyVars(~contact, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$contact=newbank[-1]
+head(bank)
+##############month
+###범주가 많으므로 mean encoding
+circle <- table(bank$month)
+circle
+month=list()
+for(i in 1:length(circle)){
+  month[i]=circle[i]/length(bank$month)
+}
+month# apr   aug   dec   jul   jun   mar   may   nov   oct   sep 
+month[1]
+
+
+for(i in 1:length(bank$month)){
+  if(bank$month[i]=="apr"){
+    bank$month[i]=month[1]
+  }else if(bank$month[i]=="aug"){
+    bank$month[i]=month[2]
+  }else if(bank$month[i]=="dec"){
+    bank$month[i]=month[3]
+  }else if(bank$month[i]=="jul"){
+    bank$month[i]=month[4]
+  }else if(bank$month[i]=="jun"){
+    bank$month[i]=month[5]
+  }else if(bank$month[i]=="mar"){
+    bank$month[i]=month[6]
+  }else if(bank$month[i]=="may"){
+    bank$month[i]=month[7]
+  }else if(bank$month[i]=="nov"){
+    bank$month[i]=month[8]
+  }else if(bank$month[i]=="oct"){
+    bank$month[i]=month[9]
+  }else if(bank$month[i]=="sep"){
+    bank$month[i]=month[10]
+  }
+}
+head(bank$month)
+head(bank)
+unique(bank$month)
+sum(is.na(bank$month))
+##########day_of_week
+###범주가 많으므로 mean encoding
+circle <- table(bank$day_of_week)
+circle
+day_of_week=list()
+for(i in 1:length(circle)){
+  day_of_week[i]=circle[i]/length(bank$day_of_week)
+}
+day_of_week# fri  mon  thu  tue  wed 
+
+for(i in 1:length(bank$day_of_week)){
+  if(bank$day_of_week[i]=="fri"){
+    bank$day_of_week[i]=day_of_week[1]
+  }else if(bank$day_of_week[i]=="mon"){
+    bank$day_of_week[i]=day_of_week[2]
+  }else if(bank$day_of_week[i]=="thu"){
+    bank$day_of_week[i]=day_of_week[3]
+  }else if(bank$day_of_week[i]=="tue"){
+    bank$day_of_week[i]=day_of_week[4]
+  }else if(bank$day_of_week[i]=="wed"){
+    bank$day_of_week[i]=day_of_week[5]
+  }
+}
+head(bank$day_of_week)
+head(bank)
+#########poutcome
+dmy <- dummyVars(~poutcome, data = bank)
+dmy
+newbank=data.frame(predict(dmy, newdata = bank))
+newbank
+
+head(bank)
+bank$poutcome=newbank
+head(bank)
+
+head(bank[21])
+# 2. y imbalanced 규명-> undersampling, oversampling
+a=table(bank$y)
+a
+
+
+# 3. 예측 모델 선택(성능 비교)
+str(bank)
+
+#단일 모형과 앙상블 모형의 성능 비교교
+#대상 데이터: Person Loan
+#단일모형: 인공신경망, 의사결정나무
+#앙상블 모형: 인공신경망 배깅, 의사결정나무 부스팅,의사결정나무 그래디언트 부스팅, 랜덤포레스트
+#인공신경망->mlp
+#Performance Evaluation Function
+perf_eval=function(cm){
+  #True positive rate: TRp (Recall)
+  TPR=cm[2,2]/sum(cm[2,])
+  #Precision
+  PRE=cm[2,2]/sum(cm[,2])
+  #True negative rate: TNR
+  TNR=cm[1,1]/sum(cm[1,])
+  #Simple Accuracy
+  ACC=(cm[1,1]+cm[2,2])/sum(cm)
+  #Balanced Correction Rate
+  BCR=sqrt(TPR*TNR)
+  #F1-Measure
+  F1=2*TPR*PRE/(TPR+PRE)
+  return(c(TPR,PRE,TNR,ACC,BCR,F1))
+}
+Perf.Table=matrix(0,nrow=6,ncol=6)
+rownames(Perf.Table) <- c("ANN", "CART", "Bagging ANN", "AdaBoost", "GBM", "Random
+                          Forests")
+colnames(Perf.Table) <- c("TPR", "Precision", "TNR", "Accuracy", "BCR",
+                          "F1-Measure")
+
+# Part 1: Classification with Single Model ---------------------------------------
+# Model 1: Artificial Neural Network ---------------------------------------------
+
+
+input.idx <- c(seq(1:20))
+target.idx <- 21
+bank.input <- bank[,input.idx]
+bank.input.scaled <- scale(bank.input, center = TRUE, scale = TRUE)
+bank.target <- as.factor(bank[,target.idx])
+bank.data.scaled <- data.frame(bank.input.scaled, bank.target)
+#학습사용(정규화해서 넣어줘야함***)->  Age Experience Income Family CCAvg Education Mortgage Securities.Account CD.Account Online CreditCard
+#target->Personal.Loan
+############################################
+#mlp
+# Divide the dataset into the training dataset and test dataset
+
+trn.idx <- 1:30000
+tst.idx <- 30000:41188
+# Input/Target configuration
+ANN.trn.input <- bank.input.scaled[trn.idx,]
+ANN.trn.target <- class.ind(bank.target[trn.idx])
+ANN.tst.input <- bank.input.scaled[tst.idx,]
+ANN.tst.target <- class.ind(bank.target[tst.idx])
+?class.ind#Generates a class indicator function from a given factor.
+#최초 30000개의 개체는 학습, 이후 11188개의 개체는 테스트에 사용
+#class.ind()로 원핫인코딩해줌
+
+# Trainin ANN
+ANN.model <- nnet(ANN.trn.input, ANN.trn.target, size = 18,
+                  decay = 5e-4, maxit = 300)
+#은닉노드의 수는 8장에서 5-fold cross validation에 의해 최적으로 선택된 18을 사용
+# Performance evaluation
+ANN.prey <- predict(ANN.model, ANN.tst.input)
+ANN.cfm <- table(max.col(ANN.tst.target), max.col(ANN.prey))
+Perf.Table[1,] <- perf_eval(ANN.cfm)
+Perf.Table
+
+# Model 2: Classification Tree -----------------------------------------------
+# cart 사용 (classification and regression tree)
+# binary split(노드에서 가지칠때 이진분류), 평가지수=지니불순도
+
+#install.packages("party")
+library(party)
+CART.trn <- data.frame(bank.input[trn.idx,], bankYN = bank.target[trn.idx])
+CART.tst <- data.frame(bank.input[tst.idx,], bankYN = bank.target[tst.idx])
+#CART용 학습 및 테스트데이터 구성(설명변수: 정규화하지 않은 값 사용, 종속변수: factor형태의 종속변수 사용)
+# decision tree이므로 정규화필요x
+
+# CART parameters
+tree.control = ctree_control(mincriterion = 0.95, minsplit = 10, maxdepth = 0)
+# Training the tree
+CART.model <- ctree(bankYN ~ ., data = CART.trn, controls = tree.control)
+# Prediction
+CART.prey <- predict(CART.model, newdata = CART.tst)
+CART.cfm <- table(CART.tst$bankYN, CART.prey)
+Perf.Table[2,] <- perf_eval(CART.cfm)
+Perf.Table
+# mlp보다 대부분 우수함
+
+# Part 2: Classification with Ensemble Models -----------------------------
+# Model 3: Bagging with Neural Network ------------------------------------
+# 멀티코어 CPU를 사용하여 작업 수행가능
+# “caret” 패키지: 배깅 인공신경망 기능 포함
+
+#install.packages("caret")
+# “doParallel” 패키지: Multi-core/thread 작업 가능
+#install.packages("doParallel")
+library(caret)
+library(doParallel)
+#Multi-core의 경우 parallel training이 가능
+#makeCluster(8): 8개의 스레드로 구성된 병렬 클러스터 구축
+cl <- makeCluster(8)
+#registerDoParallel(cl): cl이라 명명된 병렬클러스터를 사용 가능하도록 준비
+registerDoParallel(cl)
+
+?avNNet
+# Bagging Training
+ptm <- proc.time()
+Bagging.ANN.model <- avNNet(ANN.trn.input, ANN.trn.target, size = 18, decay = 5e-4,
+                            repeats = 100, bag = TRUE, allowParallel = TRUE, trace = TRUE)
+# 인공신경망 기반 배깅 수행
+# avNNet(
+#인자 1: 학습 데이터의 설명변수
+#인자 2: 학습 데이터의 종속변수
+#인자 3, 4: nnet의 size옵션 및 decay 옵션과 동일 (단일 인공신경망 최적 은닉 노드 수 사용)
+#인자 5(repeats = 100): 배깅 population 수 (100개의 개별 인공신경망 학습 및 결과 취합)
+#인자 6(bag = TRUE): 샘플링 시 중복 허용 여부(TRUE이면 허용 = 붓스트랩 생성)
+#인자 7(allowParallel = TRUE): 병렬 처리 허용 여부
+#인자 8(trace = TRUE): 학습 과정을 콘솔창에 표시):
+
+Bagging.Time <- proc.time() - ptm
+
+# Bagging Test
+Bagging.ANN.prey <- predict(Bagging.ANN.model, newdata = ANN.tst.input)
+Bagging.ANN.cfm <- table(max.col(ANN.tst.target), max.col(Bagging.ANN.prey))
+Perf.Table[3,] <- perf_eval(Bagging.ANN.cfm)
+Perf.Table
+
+
+# Bagging Test
+Bagging.ANN.prey <- predict(Bagging.ANN.model, newdata = ANN.tst.input)
+Bagging.ANN.cfm <- table(max.col(ANN.tst.target), max.col(Bagging.ANN.prey))
+Perf.Table[3,] <- perf_eval(Bagging.ANN.cfm)
+Perf.Table
+
+#ANN Bagging의 경우 단일 인공신경망보다는 높은 성능을 나타내나 단일 CART보다는
+#근소하게 성능이 낮음
+
+# Model 4: AdaBoost with Stump Tree ---------------------------------------
+#install.packages("ada")
+library(ada)
+# “ada” 패키지: AdaBoost를 구현한 패키지
+# Stump Tree는 분기를 1회만 수행한 의사결정나무이므로 데이터 구조는 CART와
+#동일하게 설정
+AdaBoost.trn <- CART.trn
+AdaBoost.tst <- CART.tst
+
+# Training AdaBoost with Stump Tree (Tree with 1 depth)
+ptm <- proc.time()
+AdaBoost.model <- ada(AdaBoost.trn[,1:11], AdaBoost.trn[,12], loss = "exponential",
+                      iter = 100, bag.frac = 0.5, verbose = TRUE)
+Boosting.Time <- proc.time() - ptm
+print(AdaBoost.model)
+
+# ada( ): AdaBoost 수행 함수
+# 인자 1 & 2: 학습데이터의 설명변수 & 종속변수
+# 인자 3: 손실함수 종류 (“exponential”로 설정하면 분류 모델을 학습)
+# 인자 4: 앙상블 population 수 (100개의 개별 모델 학습)
+# 인자 5: 학습 데이터 샘플링 비율 (다음 단계의 학습 데이터 추출 시 50%만 사용, 중복은
+#                         허용하지 않음)
+
+
+# Prediction
+AdaBoost.prey <- predict(AdaBoost.model, AdaBoost.tst[,1:11])
+AdaBoost.cfm <- table(AdaBoost.tst$bankYN, AdaBoost.prey)
+Perf.Table[4,] <- perf_eval(AdaBoost.cfm)
+Perf.Table
+
+#AdaBoost 결과
+#단순 정확도,BCR, F1-Measure 관점에서 모두 ANN, CART, ANN Bagging보다 우수한 성능을
+#보임
+
+# Model 5: Gradient Boosting Machine --------------------------------------
+#install.packages("gbm")
+library(gbm)
+# “gbm” 패키지: Gradient boosting machine이 구현된 패키지
+GBM.trn <- data.frame(bank.input[trn.idx,], bankYN = bank[trn.idx,target.idx])
+GBM.tst <- data.frame(bank.input[tst.idx,], bankYN = bank[tst.idx,target.idx])
+
+# Training the GBM
+ptm <- proc.time()
+GBM.model <- gbm.fit(GBM.trn[,1:11], GBM.trn[,12], distribution = "bernoulli",
+                     n.trees = 1000, shrinkage = 0.02,
+                     bag.fraction = 0.8, nTrain = 1000)
+GBM.Time <- proc.time() - ptm
+summary(GBM.model)
+
+#gbm.fit( ): Gradient boosting machine 학습 함수
+#인자 1 & 2: 학습 데이터 설명변수 & 종속변수
+#인자 3: distribution = “bernoulli” 설정 시 분류 모델 학습
+#인자 4: 앙상블 population (주의: GBM은 Bagging과 AdaBoost에 비해 앙상블 population의
+#                         수를 크게 설정해주는 것이 좋음)
+#인자 5: 과적합 제어를 위한 장치
+#인자 6: 학습 데이터 샘플링 비율
+#인자 7: 학습 데이터의 최대 수 (인자 6에서 설정된 값과 비교하여 더 작은 값으로 사용)
+summary(GBM.model)
+#GBM 모형을 구축하는데 중요도가 높은 변수출력
+
+# Prediction
+GBM.prey <- predict(GBM.model, GBM.tst[,1:11], type = "response")
+GBM.prey <- round(GBM.prey)
+GBM.cfm <- table(GBM.prey, GBM.tst$bankYN)
+Perf.Table[5,] <- perf_eval(GBM.cfm)
+Perf.Table
+
+# GBM 결과
+#TPR은 다른 모형에 비해 매우 높게 나타나나 Precision이 낮음  False alarm이 높음
+#높은 TPR로 인해 BCR은 가장 높게 나타나지만 F1-Measure 측면에서는 가장 낮은 성능을나타냄
+
+# Model 6: Random Forest --------------------------------------------------
+#install.packages("randomForest")
+library(randomForest)
+RF.trn <- CART.trn
+RF.tst <- CART.tst
+
+# Training the Random Forest
+ptm <- proc.time()
+RF.model <- randomForest(bankYN ~ ., data = RF.trn, ntree = 100,
+                         importance = TRUE, do.trace = TRUE)
+RF.Time <- proc.time() - ptm
+# Check the result
+print(RF.model)
+plot(RF.model)
+
+# randomForest( ): Random Forest 학습 함수
+#인자 1: Formula
+#인자 2: 학습 데이터
+#인자 3: 앙상블 population (이 실험에서는 100개의 개별 decision tree 학습)
+#인자 4: OOB 데이터를 이용한 변수 중요도 산출 여부
+#인자 5: 학습 경과를 콘솔창에 출력
+# 변수의 중도도 산출 및 그래프 도시
+Var.imp <- importance(RF.model)
+barplot(Var.imp[order(Var.imp[,4], decreasing = TRUE),4])
+
+# Prediction
+RF.prey <- predict(RF.model, newdata = RF.tst, type = "class")
+RF.cfm <- table(RF.prey, RF.tst$bankYN)
+Perf.Table[6,] <- perf_eval(RF.cfm)
+Perf.Table
+
+#Random Forest 결과
+#TPR은 여섯 가지 모형 중에서 가장 높으나, Precision은 GBM 다음으로 낮음
+#BCR관점에서 가장 우수한 성능을 나타내며 Accuracy와 F1-Measure 관점에서는 두 번째로우수한 정확도를 나타냄
+
+
+
+
+# 4. reg, decision tree, 로지스틱 으로 결과 해석
+# 5. 랜포로 변수별 분산 측정 
+# 6. xgboost로 변수별 중요도 측정
+# 7. 4,5,6종합해 중요한 변수 제시
+#정기예금에 대한 telemarketing을 위한 모형을 제시하고 모형의 결과를 해석하고 적용방안을 제시
+#해석력이나 예측력은 학생이 어떻게 적용할 것이냐에 따라 다릅니다
+
+
+
