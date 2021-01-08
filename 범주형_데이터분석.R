@@ -66,9 +66,9 @@ d1<-density(data$dhome[which(data$alife==1)])
 d0<-density(data$dhome[which(data$alife==2)])
 d1
 d0
-plot(d1,xlim=c(-1000,1000),ylim=c(0,0.001),col=10,main='본가에서 캠퍼스까지의 거리별 사후세계 믿음')
+plot(d1,xlim=c(-1000,3000),ylim=c(0,0.001),col=10,main='본가에서 캠퍼스까지의 거리별 사후세계 믿음')
 lines(d0,col=4)
-legend(x=500,y=0.001,c("믿음","안믿음"),col=c(10,4),pch=c(1,1))
+legend(x=2500,y=0.001,c("믿음","안믿음"),col=c(10,4),pch=c(1,1))
 #dres :  현재 거주지에서 강의실까지의 거리 (마일)
 d1<-density(data$dres[which(data$alife==1)])
 d0<-density(data$dres[which(data$alife==2)])
